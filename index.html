@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConvertX - המרת קבצים חכמה</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%236366f1'/><stop offset='100%25' style='stop-color:%23a855f7'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><text x='50' y='68' font-size='55' text-anchor='middle' fill='white'>⚡</text></svg>">
+    <script src="coi-serviceworker.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-main">
+                <div class="logo">⚡</div>
+                <h1>ConvertX</h1>
+            </div>
+            <p class="subtitle">המר וידאו, אודיו ו-PDF בלחיצה אחת • 100% פרטי • עובד בדפדפן</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="media">המרת מדיה</button>
+            <button class="tab-btn" data-tab="trim">חיתוך מדיה</button>
+            <button class="tab-btn" data-tab="img-to-pdf">תמונות ← PDF</button>
+            <button class="tab-btn" data-tab="pdf-to-img">PDF ← תמונות</button>
+            <button class="tab-btn" data-tab="pdf-compress">דחיסת PDF</button>
+        </div>
+
+        <!-- Media Converter Tab -->
+        <div class="tab-content active" id="media-tab">
+            <div id="ffmpeg-status" class="ffmpeg-loading">
+                <div class="loading-spinner"></div>
+                <p>טוען את מנוע ההמרה...</p>
+                <p>הדף עשוי להתרענן פעם אחת</p>
+            </div>
+
+            <div id="media-converter" style="display: none;">
+                <div class="drop-zone" id="media-drop">
+                    <div class="drop-zone-content" id="media-drop-content">
+                        <div class="drop-zone-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <div class="drop-zone-text">גרור קובץ וידאו או אודיו לכאן</div>
+                        <div class="drop-zone-hint">MP3, MP4, WAV, WebM, OGG, M4A</div>
+                    </div>
+                    <div class="file-preview" id="media-preview" style="display: none;">
+                        <div class="preview-media-container">
+                            <video id="video-preview" controls style="display: none;"></video>
+                            <audio id="audio-preview" controls style="display: none;"></audio>
+                        </div>
+                        <div class="preview-info">
+                            <div class="preview-name" id="media-preview-name"></div>
+                            <div class="preview-size" id="media-preview-size"></div>
+                        </div>
+                        <button class="preview-remove" id="media-remove" title="הסר קובץ">×</button>
+                    </div>
+                    <input type="file" class="file-input" id="media-input" accept=".mp3,.mp4,.wav,.webm,.ogg,.m4a,.avi,.mkv,.mov">
+                </div>
+
+                <div class="options">
+                    <div class="option-group">
+                        <label>פורמט יעד</label>
+                        <select id="media-format">
+                            <option value="mp3">MP3 (אודיו)</option>
+                            <option value="wav">WAV (אודיו)</option>
+                            <option value="ogg">OGG (אודיו)</option>
+                            <option value="m4a">M4A (אודיו)</option>
+                            <option value="mp4">MP4 (וידאו)</option>
+                            <option value="webm">WebM (וידאו)</option>
+                            <option value="avi">AVI (וידאו)</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label>איכות אודיו (Bitrate)</label>
+                        <select id="audio-bitrate">
+                            <option value="64k">64 kbps (נמוכה)</option>
+                            <option value="128k" selected>128 kbps (רגילה)</option>
+                            <option value="192k">192 kbps (גבוהה)</option>
+                            <option value="256k">256 kbps (גבוהה מאוד)</option>
+                            <option value="320k">320 kbps (מקסימום)</option>
+                        </select>
+                    </div>
+                    <div class="option-group" id="video-options">
+                        <label>רזולוציית וידאו</label>
+                        <select id="video-resolution">
+                            <option value="original">מקורית</option>
+                            <option value="1920:1080">1080p (Full HD)</option>
+                            <option value="1280:720">720p (HD)</option>
+                            <option value="854:480">480p (SD)</option>
+                            <option value="640:360">360p</option>
+                        </select>
+                    </div>
+                    <div class="option-group" id="video-quality-options">
+                        <label>איכות וידאו (CRF)</label>
+                        <select id="video-crf">
+                            <option value="18">גבוהה מאוד (18)</option>
+                            <option value="23" selected>רגילה (23)</option>
+                            <option value="28">נמוכה (28)</option>
+                            <option value="35">נמוכה מאוד (35)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="progress-container" id="media-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="media-progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="media-progress-text">מתחיל...</div>
+                </div>
+
+                <button class="btn btn-primary" id="media-convert-btn" disabled>
+                    המר קובץ
+                </button>
+
+                <div class="result" id="media-result"></div>
+            </div>
+        </div>
+
+        <!-- Trim Media Tab -->
+        <div class="tab-content" id="trim-tab">
+            <div id="trim-ffmpeg-status" class="ffmpeg-loading">
+                <div class="loading-spinner"></div>
+                <p>טוען את מנוע החיתוך...</p>
+            </div>
+
+            <div id="trim-converter" style="display: none;">
+                <div class="drop-zone" id="trim-drop">
+                    <div class="drop-zone-content" id="trim-drop-content">
+                        <div class="drop-zone-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="6" cy="6" r="3"/>
+                                <circle cx="6" cy="18" r="3"/>
+                                <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                                <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                                <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="drop-zone-text">גרור קובץ וידאו או אודיו לכאן</div>
+                        <div class="drop-zone-hint">בחר את הקטע שברצונך לשמור</div>
+                    </div>
+                    <div class="file-preview" id="trim-preview" style="display: none;">
+                        <div class="preview-media-container">
+                            <video id="trim-video-preview" controls style="display: none;"></video>
+                            <audio id="trim-audio-preview" controls style="display: none;"></audio>
+                        </div>
+                        <div class="preview-info">
+                            <div class="preview-name" id="trim-preview-name"></div>
+                            <div class="preview-size" id="trim-preview-size"></div>
+                            <div class="preview-duration" id="trim-preview-duration"></div>
+                        </div>
+                        <button class="preview-remove" id="trim-remove" title="הסר קובץ">×</button>
+                    </div>
+                    <input type="file" class="file-input" id="trim-input" accept=".mp3,.mp4,.wav,.webm,.ogg,.m4a,.avi,.mkv,.mov">
+                </div>
+
+                <div class="trim-controls" id="trim-controls">
+                    <div class="trim-time-inputs">
+                        <div class="trim-time-group">
+                            <label>התחלה</label>
+                            <div class="trim-time-input">
+                                <input type="text" id="trim-start" placeholder="0:00" maxlength="8">
+                                <button class="trim-set-btn" id="trim-set-start" title="הגדר לזמן נוכחי">◉</button>
+                            </div>
+                        </div>
+                        <div class="trim-time-group">
+                            <label>סיום</label>
+                            <div class="trim-time-input">
+                                <input type="text" id="trim-end" placeholder="0:00" maxlength="8">
+                                <button class="trim-set-btn" id="trim-set-end" title="הגדר לזמן נוכחי">◉</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="trim-duration-display">
+                        <span>משך הקטע: </span>
+                        <span id="trim-result-duration">--:--</span>
+                    </div>
+                </div>
+
+                <div class="progress-container" id="trim-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="trim-progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="trim-progress-text">מעבד...</div>
+                </div>
+
+                <button class="btn btn-primary" id="trim-btn" disabled>
+                    ✂ חתוך קובץ
+                </button>
+
+                <div class="result" id="trim-result"></div>
+            </div>
+        </div>
+
+        <!-- Image to PDF Tab -->
+        <div class="tab-content" id="img-to-pdf-tab">
+            <div class="drop-zone" id="img-drop">
+                <div class="drop-zone-content" id="img-drop-content">
+                    <div class="drop-zone-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                    </div>
+                    <div class="drop-zone-text">גרור תמונות לכאן</div>
+                    <div class="drop-zone-hint">ניתן לבחור מספר תמונות</div>
+                </div>
+                <input type="file" class="file-input" id="img-input" accept="image/*" multiple>
+            </div>
+
+            <div class="image-preview-grid" id="img-preview-grid"></div>
+
+            <div class="options">
+                <div class="option-group">
+                    <label>גודל עמוד</label>
+                    <select id="pdf-page-size">
+                        <option value="a4">A4</option>
+                        <option value="letter">Letter</option>
+                        <option value="fit">התאם לתמונה</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>איכות תמונה (%)</label>
+                    <input type="range" id="img-quality" min="10" max="100" value="85">
+                    <span id="img-quality-value">85%</span>
+                </div>
+                <div class="option-group">
+                    <label>מיקום בעמוד</label>
+                    <select id="img-position">
+                        <option value="center">מרכז</option>
+                        <option value="fit">מלא עמוד</option>
+                        <option value="stretch">מתוח</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="progress-container" id="img-pdf-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="img-pdf-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="img-pdf-progress-text">מעבד...</div>
+            </div>
+
+            <button class="btn btn-primary" id="img-to-pdf-btn" disabled>
+                צור PDF
+            </button>
+
+            <div class="result" id="img-pdf-result"></div>
+        </div>
+
+        <!-- PDF to Image Tab -->
+        <div class="tab-content" id="pdf-to-img-tab">
+            <div class="drop-zone" id="pdf-img-drop">
+                <div class="drop-zone-content" id="pdf-img-drop-content">
+                    <div class="drop-zone-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                    </div>
+                    <div class="drop-zone-text">גרור קובץ PDF לכאן</div>
+                    <div class="drop-zone-hint">להמרה לתמונות PNG / JPG</div>
+                </div>
+                <div class="file-preview" id="pdf-img-preview" style="display: none;">
+                    <div class="pdf-preview-container">
+                        <canvas id="pdf-img-canvas"></canvas>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-name" id="pdf-img-preview-name"></div>
+                        <div class="preview-size" id="pdf-img-preview-size"></div>
+                        <div class="preview-pages" id="pdf-img-preview-pages"></div>
+                    </div>
+                    <button class="preview-remove" id="pdf-img-remove" title="הסר קובץ">×</button>
+                </div>
+                <input type="file" class="file-input" id="pdf-img-input" accept=".pdf">
+            </div>
+
+            <div class="options">
+                <div class="option-group">
+                    <label>פורמט תמונה</label>
+                    <select id="img-output-format">
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>קנה מידה (DPI)</label>
+                    <select id="img-scale">
+                        <option value="1">72 DPI (מהיר)</option>
+                        <option value="1.5">108 DPI</option>
+                        <option value="2" selected>144 DPI (מומלץ)</option>
+                        <option value="3">216 DPI (איכות גבוהה)</option>
+                        <option value="4">288 DPI (מקסימום)</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>עמודים להמרה</label>
+                    <select id="pdf-pages">
+                        <option value="all">כל העמודים</option>
+                        <option value="first">עמוד ראשון בלבד</option>
+                        <option value="custom">טווח מותאם</option>
+                    </select>
+                </div>
+                <div class="option-group" id="custom-pages-group" style="display: none;">
+                    <label>טווח עמודים (לדוגמה: 1-5, 8, 10-12)</label>
+                    <input type="text" id="custom-pages" placeholder="1-5, 8, 10-12">
+                </div>
+            </div>
+
+            <div class="progress-container" id="pdf-img-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pdf-img-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="pdf-img-progress-text">מעבד...</div>
+            </div>
+
+            <button class="btn btn-primary" id="pdf-to-img-btn" disabled>
+                המר לתמונות
+            </button>
+
+            <div class="result" id="pdf-img-result"></div>
+        </div>
+
+        <!-- PDF Compress Tab -->
+        <div class="tab-content" id="pdf-compress-tab">
+            <div class="drop-zone" id="pdf-compress-drop">
+                <div class="drop-zone-content" id="pdf-compress-drop-content">
+                    <div class="drop-zone-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                    </div>
+                    <div class="drop-zone-text">גרור קובץ PDF לכאן</div>
+                    <div class="drop-zone-hint">להקטנת גודל הקובץ</div>
+                </div>
+                <div class="file-preview" id="pdf-compress-preview" style="display: none;">
+                    <div class="pdf-preview-container">
+                        <canvas id="pdf-compress-canvas"></canvas>
+                    </div>
+                    <div class="preview-info">
+                        <div class="preview-name" id="pdf-compress-preview-name"></div>
+                        <div class="preview-size" id="pdf-compress-preview-size"></div>
+                        <div class="preview-pages" id="pdf-compress-preview-pages"></div>
+                    </div>
+                    <button class="preview-remove" id="pdf-compress-remove" title="הסר קובץ">×</button>
+                </div>
+                <input type="file" class="file-input" id="pdf-compress-input" accept=".pdf">
+            </div>
+
+            <div class="options">
+                <div class="option-group">
+                    <label>רמת דחיסה</label>
+                    <select id="compress-level">
+                        <option value="low">נמוכה (איכות גבוהה)</option>
+                        <option value="medium" selected>בינונית (מאוזן)</option>
+                        <option value="high">גבוהה (קובץ קטן)</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>איכות תמונות ב-PDF (%)</label>
+                    <input type="range" id="pdf-img-quality" min="10" max="100" value="60">
+                    <span id="pdf-img-quality-value">60%</span>
+                </div>
+            </div>
+
+            <div class="progress-container" id="pdf-compress-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="pdf-compress-progress-fill"></div>
+                </div>
+                <div class="progress-text" id="pdf-compress-progress-text">מעבד...</div>
+            </div>
+
+            <button class="btn btn-primary" id="pdf-compress-btn" disabled>
+                דחוס PDF
+            </button>
+
+            <div class="result" id="pdf-compress-result"></div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div class="modal-overlay" id="download-modal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeDownloadModal()">×</button>
+            <div class="modal-icon">✓</div>
+            <h2 class="modal-title" id="modal-title">ההמרה הושלמה!</h2>
+            <p class="modal-subtitle" id="modal-subtitle">הקובץ מוכן להורדה</p>
+            <div class="modal-stats" id="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modal-original-size">-</div>
+                    <div class="modal-stat-label">גודל מקורי</div>
+                </div>
+                <div class="modal-stat highlight">
+                    <div class="modal-stat-value" id="modal-new-size">-</div>
+                    <div class="modal-stat-label">גודל חדש</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeDownloadModal()">סגור</button>
+                <button class="btn btn-download" id="modal-download-btn">↓ הורד קובץ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript files - loaded in correct order with defer -->
+    <script src="js/utils.js" defer></script>
+    <script src="js/tabs.js" defer></script>
+    <script src="js/media-converter.js" defer></script>
+    <script src="js/trim.js" defer></script>
+    <script src="js/images-to-pdf.js" defer></script>
+    <script src="js/pdf-to-images.js" defer></script>
+    <script src="js/pdf-compress.js" defer></script>
+    <script src="js/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@zip.js/zip.js@2"></script>
+</head>
+<body>
+  <input type="file" id="zipFile" />
+  <button onclick="brute()">Start Brute 0000-9999</button>
+  <div id="result"></div>
+
+  <script>
+  async function brute() {
+    const file = document.getElementById('zipFile').files[0];
+    if (!file) return alert("Upload ZIP first");
+
+    const zipBlob = await file.arrayBuffer();
+    let found = false;
+
+    for (let i = 0; i < 10000; i++) {
+      const pass = i.toString().padStart(4, '0');
+      try {
+        const zipReader = new zip.ZipReader(new zip.BlobReader(zipBlob));
+        await zipReader.getEntries();
+        // נסה לפתוח עם סיסמה
+        const firstEntry = (await zipReader.getEntries())[0];
+        const writer = new zip.TextWriter();
+        await firstEntry.getData(writer, { password: pass });
+        document.getElementById('result').innerText = `!! נמצאה: ${pass}`;
+        found = true;
+        break;
+      } catch (e) {
+        // סיסמה שגויה – המשך
+        if (i % 1000 === 0) console.log(`${i} נוסו...`);
+      }
+    }
+    if (!found) alert("לא נמצאה");
+  }
+  </script>
+</body>
+</html>
+        }
+    }
+    log.innerHTML += "\nFINISHED.";
+}
+</script>
+</body>
+</html>
