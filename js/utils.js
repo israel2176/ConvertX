@@ -202,6 +202,13 @@ function showDownloadModal(options) {
         closeDownloadModal();
     };
 
+    // Track statistics
+    if (options.originalSize) {
+        trackFileProcessed(options.originalSize);
+    } else if (options.newSize) {
+        trackFileProcessed(options.newSize);
+    }
+
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
