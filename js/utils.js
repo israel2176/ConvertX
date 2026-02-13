@@ -64,6 +64,16 @@ function updateStatsDisplay() {
     }
 }
 
+/**
+ * Reset statistics in localStorage and UI
+ */
+function resetStats() {
+    if (confirm('האם אתה בטוח שברצונך לאפס את הסטטיסטיקה?')) {
+        saveStats({ filesProcessed: 0, bytesProcessed: 0 });
+        updateStatsDisplay();
+    }
+}
+
 // ============================================
 // FILE SIZE FORMATTING
 // ============================================
