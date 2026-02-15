@@ -17,22 +17,36 @@ ConvertX הוא כלי עוצמתי ופרטי לחלוטין לעיבוד וה�
 - [PDF.js](https://mozilla.github.io/pdf.js/) - לקריאה ותצוגה של קבצי PDF.
 - [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) - לאיפשור SharedArrayBuffer בסביבות אירוח סטטיות.
 
-## פריסה (Deployment)
+## איך להריץ את הפרויקט?
 
-הפרויקט הוא אתר סטטי וניתן לארח אותו בכל שרת אינטרנט או שירות כמו GitHub Pages, Vercel, או Netlify.
+ניתן להשתמש ב-ConvertX בשתי דרכים:
 
-### דגש חשוב: SharedArrayBuffer
-כדי ש-FFmpeg.wasm יעבוד, הדפדפן דורש "בידוד חוצה-מקורות" (Cross-Origin Isolation). זה מושג באמצעות שני כותרות HTTP:
-- `Cross-Origin-Embedder-Policy: require-corp`
-- `Cross-Origin-Opener-Policy: same-origin`
+### 1. הרצה מקומית על המחשב
+1. **הורדת הקבצים**: הורד את הפרויקט כקובץ ZIP וחלץ אותו, או שclone את המאגר:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/convertx.git
+   cd convertx
+   ```
+2. **הפעלת שרת**: מכיוון שהפרויקט משתמש ב-Service Workers וב-WebAssembly, אי אפשר פשוט לפתוח את קובץ ה-`index.html` ישירות מהתיקייה. יש להריץ שרת מקומי.
+   - אם מותקן לכם Node.js:
+     ```bash
+     npx serve .
+     ```
+   - אם מותקן לכם Python:
+     ```bash
+     python -m http.server 3000
+     ```
+3. **פתיחה בדפדפן**: עברו לכתובת `http://localhost:3000`.
 
-**הפתרון שלנו:** הפרויקט כולל את `coi-serviceworker.js` שטוען את הכותרות הללו באופן אוטומטי גם בשירותים שלא מאפשרים להגדיר כותרות HTTP (כמו GitHub Pages).
+### 2. פריסה לשרת (Production)
+הפרויקט הוא אתר סטטי לחלוטין. ניתן להעלות את כל הקבצים לכל שירות אירוח (GitHub Pages, Netlify, Vercel, שרת Apache/Nginx וכו').
 
-### הרצה מקומית
-ניתן להריץ את הפרויקט מקומית באמצעות שרת HTTP פשוט. לדוגמה:
-```bash
-npx serve .
-```
+#### דגש חשוב: SharedArrayBuffer
+כדי שמנוע ההמרה (FFmpeg) יעבוד, הדפדפן דורש סביבה מאובטחת ו"בידוד חוצה-מקורות".
+**אל דאגה!** הפרויקט כולל את `coi-serviceworker.js` שדואג לזה אוטומטית. אין צורך בהגדרות מיוחדות בשרת ברוב המקרים.
+
+---
+
 
 ---
 
@@ -54,19 +68,32 @@ ConvertX is a powerful and fully private tool for processing and converting file
 - [PDF.js](https://mozilla.github.io/pdf.js/) - For reading and rendering PDF files.
 - [coi-serviceworker](https://github.com/gzuidhof/coi-serviceworker) - To enable SharedArrayBuffer in static hosting environments.
 
-## Deployment
+## How to Run?
 
-The project is a static website and can be hosted on any web server or service such as GitHub Pages, Vercel, or Netlify.
+You can use ConvertX in two ways:
 
-### Important: SharedArrayBuffer
-For FFmpeg.wasm to function, the browser requires "Cross-Origin Isolation". This is achieved using two HTTP headers:
-- `Cross-Origin-Embedder-Policy: require-corp`
-- `Cross-Origin-Opener-Policy: same-origin`
+### 1. Locally on Your Computer
+1. **Download/Clone**: Download the project as a ZIP and extract it, or clone the repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/convertx.git
+   cd convertx
+   ```
+2. **Run a Server**: Due to the use of Service Workers and WebAssembly, you cannot simply open `index.html` directly from your file explorer. You must use a local server.
+   - If you have Node.js:
+     ```bash
+     npx serve .
+     ```
+   - If you have Python:
+     ```bash
+     python -m http.server 3000
+     ```
+3. **Open Browser**: Go to `http://localhost:3000`.
 
-**Our Solution:** The project includes `coi-serviceworker.js`, which automatically handles these headers even on platforms that do not allow custom HTTP headers (like GitHub Pages).
+### 2. Production Deployment
+The project is entirely static. You can upload all files to any hosting service (GitHub Pages, Netlify, Vercel, Apache/Nginx, etc.).
 
-### Local Development
-You can run the project locally using a simple HTTP server. For example:
-```bash
-npx serve .
-```
+#### Important: SharedArrayBuffer
+For the conversion engine (FFmpeg) to work, browsers require a secure environment and "Cross-Origin Isolation".
+**Don't worry!** The project includes `coi-serviceworker.js` which handles this automatically. In most cases, no special server configuration is needed.
+
+---

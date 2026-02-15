@@ -1499,6 +1499,24 @@ h1 {
     font-size: 0.9rem;
 }
 
+.footer-actions {
+    margin-bottom: 20px;
+}
+
+.btn-text {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+.btn-text:hover {
+    color: var(--primary-light);
+}
+
 @media (max-width: 600px) {
     .stats-bar {
         flex-direction: column;
