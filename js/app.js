@@ -27,8 +27,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize PDF compress
     initPdfCompress();
 
-    // Update stats display
-    if (typeof updateStatsDisplay === 'function') {
-        updateStatsDisplay();
-    }
 });

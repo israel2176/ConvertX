@@ -1468,58 +1468,7 @@ h1 {
     border-top: 1px solid var(--glass-border);
 }
 
-.stats-bar {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-bottom: 20px;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.stat-label {
-    color: var(--text-dim);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.stat-value {
-    color: var(--primary-light);
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
 .footer p {
     color: var(--text-dim);
     font-size: 0.9rem;
-}
-
-.footer-actions {
-    margin-bottom: 20px;
-}
-
-.btn-text {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    cursor: pointer;
-    text-decoration: underline;
-    transition: color 0.3s ease;
-}
-
-.btn-text:hover {
-    color: var(--primary-light);
-}
-
-@media (max-width: 600px) {
-    .stats-bar {
-        flex-direction: column;
-        gap: 20px;
-    }
 }

@@ -3,78 +3,6 @@
  */
 
 // ============================================
-// STATISTICS TRACKING
-// ============================================
-
-const STATS_KEY = 'convertx_stats';
-
-/**
- * Get current statistics from localStorage
- * @returns {Object} Stats object with filesProcessed and bytesProcessed
- */
-function getStats() {
-    try {
-        const stats = localStorage.getItem(STATS_KEY);
-        if (stats) {
-            return JSON.parse(stats);
-        }
-    } catch (e) {
-        console.error('Error reading stats:', e);
-    }
-    return { filesProcessed: 0, bytesProcessed: 0 };
-}
-
-/**
- * Save statistics to localStorage
- * @param {Object} stats - Stats object to save
- */
-function saveStats(stats) {
-    try {
-        localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-    } catch (e) {
-        console.error('Error saving stats:', e);
-    }
-}
-
-/**
- * Track a processed file
- * @param {number} bytes - Size of the processed file in bytes
- */
-function trackFileProcessed(bytes) {
-    const stats = getStats();
-    stats.filesProcessed++;
-    stats.bytesProcessed += bytes;
-    saveStats(stats);
-    updateStatsDisplay();
-}
-
-/**
- * Update the statistics display in the UI
- */
-function updateStatsDisplay() {
-    const stats = getStats();
-    const filesEl = document.getElementById('stats-files');
-    const sizeEl = document.getElementById('stats-size');
-
-    if (filesEl) {
-        filesEl.textContent = stats.filesProcessed.toLocaleString('he-IL');
-    }
-    if (sizeEl) {
-        sizeEl.textContent = formatFileSize(stats.bytesProcessed);
-    }
-}
-
-/**
- * Reset statistics in localStorage and UI
- */
-function resetStats() {
-    if (confirm('האם אתה בטוח שברצונך לאפס את הסטטיסטיקה?')) {
-        saveStats({ filesProcessed: 0, bytesProcessed: 0 });
-        updateStatsDisplay();
-    }
-}
-
-// ============================================
 // FILE SIZE FORMATTING
 // ============================================
 
@@ -211,13 +139,6 @@ function showDownloadModal(options) {
         downloadBlob(options.blob, options.filename);
         closeDownloadModal();
     };
-
-    // Track statistics
-    if (options.originalSize) {
-        trackFileProcessed(options.originalSize);
-    } else if (options.newSize) {
-        trackFileProcessed(options.newSize);
-    }
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
